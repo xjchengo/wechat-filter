@@ -1,0 +1,26 @@
+{
+    "name": "xjchen/wechat-filter",
+    "license": "MIT",
+    "description": "Laravel Package for 微信用户身份获取",
+    "keywords": ["wechat", "laravel", "微信", "oauth"],
+    "authors": [
+        {
+            "name": "xjchen",
+            "email": "xchenxujian@126.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "illuminate/support": "4.2.*",
+        "php-curl-class/php-curl-class": "dev-master"
+    },
+    "autoload": {
+        "classmap": [
+            "src/Exceptions.php"
+        ],
+        "psr-4": {
+            "Xjchen\\WechatFilter\\": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}
