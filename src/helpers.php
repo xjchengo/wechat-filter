@@ -158,11 +158,3 @@ if (!function_exists('get_userinfo')) {
         return $result;
     }
 }
-
-
-
-
-
-
-
-
