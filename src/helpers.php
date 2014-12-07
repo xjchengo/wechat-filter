@@ -1,5 +1,10 @@
 <?php
-require __DIR__.'/../vendor/php-curl-class/php-curl-class/src/Curl/Curl.php';
+if (is_dir(__DIR__.'/../vendor')) {
+    require __DIR__.'/../vendor/php-curl-class/php-curl-class/src/Curl/Curl.php';
+} else {
+    require __DIR__.'/../../../php-curl-class/php-curl-class/src/Curl/Curl.php';
+}
+
 
 use Curl\Curl;
 use Xjchen\WechatFilter\CurlGetException;
