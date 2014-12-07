@@ -24,10 +24,16 @@ Route::filter('wechat.base', function() {
             if (Input::has('code')) {
                 //获取openid
                 try {
-                    get_access_token(Input::get('code'));
+                    $accessToken = get_access_token(Input::get('code'));
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
                     return '获取token错误';
+                }
+                try {
+                    $userinfo = get_global_userinfo($accessToken['openid']);
+                    Session::put('wechat_userinfo', $userinfo);
+                } catch (Exception $e) {
+                    Log::error($e->getMessage());
                 }
                 return Redirect::intended(Request::fullUrl());
             } else {
@@ -64,11 +70,19 @@ Route::filter('wechat.userinfo', function() {
             }
 
             try {
-                get_userinfo($token['access_token'], $token['openid']);
+                $userinfo = get_userinfo($token['access_token'], $token['openid']);
             } catch (Exception $e) {
                 Log::error($e->getMessage());
                 return '获取userinfo错误';
             }
+            try {
+                $globalUserinfo = get_global_userinfo($token['openid']);
+                $userinfo = array_merge($userinfo, $globalUserinfo);
+            } catch (Exception $e) {
+                Log::error($e->getMessage());
+                $userinfo['subscribe'] = 0;
+            }
+            Session::put('wechat_userinfo', $userinfo);
             return Redirect::intended(Request::fullUrl());
         } else {
             try {

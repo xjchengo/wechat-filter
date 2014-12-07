@@ -11,6 +11,7 @@ use Xjchen\WechatFilter\CurlGetException;
 use Xjchen\WechatFilter\WechatConfigRequiredException;
 use Xjchen\WechatFilter\GetAccessTokenException;
 use Xjchen\WechatFilter\GetUserinfoException;
+use Carbon\Carbon;
 
 if (!function_exists('get_code_url')) {
 
@@ -26,6 +27,23 @@ if (!function_exists('get_code_url')) {
     {
         $template_url = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=APPID&redirect_uri=REDIRECT_URI&response_type=code&scope=SCOPE#wechat_redirect';
         $url = str_replace(['APPID', 'REDIRECT_URI', 'SCOPE'], [$appid, $redirect_uri, $scope], $template_url);
+        return $url;
+    }
+}
+
+if (!function_exists('get_global_access_token_url')) {
+
+    /**
+     * 生成获取access_token的url
+     *
+     * @param $appid
+     * @param $secret
+     * @return mixed
+     */
+    function get_global_access_token_url($appid, $secret)
+    {
+        $template_url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET';
+        $url = str_replace(['APPID', 'APPSECRET'], [$appid, $secret], $template_url);
         return $url;
     }
 }
@@ -67,6 +85,23 @@ if (!function_exists('get_access_token_url')) {
     }
 }
 
+if (!function_exists('get_global_userinfo_url')) {
+    /**
+     * 生成获取userinfo的url
+     *
+     * @param $access_token
+     * @param $openid
+     * @param string $lang
+     * @return mixed
+     */
+    function get_global_userinfo_url($access_token, $openid, $lang='zh_CN')
+    {
+        $template_url = 'https://api.weixin.qq.com/cgi-bin/user/info?access_token=ACCESS_TOKEN&openid=OPENID&lang=zh_CN';
+        $url = str_replace(['ACCESS_TOKEN', 'OPENID', 'LANG'], [$access_token, $openid, $lang], $template_url);
+        return $url;
+    }
+}
+
 if (!function_exists('get_userinfo_url')) {
     /**
      * 生成获取userinfo的url
@@ -103,13 +138,70 @@ if (!function_exists('basic_curl_get_wrapper')) {
             throw new CurlGetException($error);
         } else {
             if ($return_json) {
-                return json_decode($curl->response, true);
+                return json_decode($curl->raw_response, true);
             } else {
-                return $curl->response;
+                return $curl->raw_response;
             }
         }
     }
 }
+
+if (!function_exists('get_global_access_token')) {
+    /**
+     * 获取global_access_token数组
+     *
+     * @return mixed|null
+     * @throws CurlGetException
+     * @throws GetAccessTokenException
+     * @throws WechatConfigRequiredException
+     */
+    function get_global_access_token()
+    {
+        if (Cache::has('global_access_token')) {
+            return Cache::get('global_access_token');
+        }
+        $appid = Config::get('wechat.appid', '');
+        $secret = Config::get('wechat.secret', '');
+        if (!$appid or !$secret) {
+            throw new WechatConfigRequiredException('get_global_access_token中缺少appid或secret');
+        }
+        $getAccessTokenUrl = get_global_access_token_url($appid, $secret);
+        $result = curl_get_wrapper($getAccessTokenUrl);
+        if (isset($result['errcode'])) {
+            throw new GetAccessTokenException('get_global_access_token get access token error: '.json_encode($result));
+        }
+        $expiresAt = Carbon::now()->addMinutes(($result['expires_in']/60)-1);
+        Cache::put('global_access_token', $result['access_token'], $expiresAt);
+        return $result['access_token'];
+    }
+}
+
+if (!function_exists('get_global_userinfo')) {
+
+    /**
+     * 获取userinfo
+     *
+     * @param $openid
+     * @param string $lang
+     * @return mixed|null
+     * @throws CurlGetException
+     * @throws GetUserinfoException
+     */
+
+    function get_global_userinfo($openid, $lang='zh_CN')
+    {
+        $access_token = get_global_access_token();
+        $getUserinfoUrl = get_global_userinfo_url($access_token, $openid, $lang);
+        $result = curl_get_wrapper($getUserinfoUrl);
+        if (isset($result['errcode'])) {
+            throw new GetUserinfoException('get_global_userinfo error: '.json_encode($result));
+        }
+        Session::put('global_wechat_userinfo', $result);
+        return $result;
+    }
+}
+
+
 
 if (!function_exists('get_access_token')) {
     /**
