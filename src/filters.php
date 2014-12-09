@@ -16,7 +16,9 @@ Route::filter('wechat.base', function() {
     $environment = App::environment();
     if ($environment == 'local' and !preg_match('#MicroMessenger#i', $userAgent)) {
         Session::put('oauth_time', time());
-        Session::put('openid', Input::get('openid', ''));
+        if (Input::has('openid')) {
+            Session::put('openid', Input::get('openid'));
+        }
     } else {
         $lastOauthTime = Session::get('oauth_time', 0);
         $timeNow = time();

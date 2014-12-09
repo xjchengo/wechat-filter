@@ -1,9 +1,9 @@
 <?php
-if (is_dir(__DIR__.'/../vendor')) {
+/*if (is_dir(__DIR__.'/../vendor')) {
     require __DIR__.'/../vendor/php-curl-class/php-curl-class/src/Curl/Curl.php';
 } else {
     require __DIR__.'/../../../php-curl-class/php-curl-class/src/Curl/Curl.php';
-}
+}*/
 
 
 use Curl\Curl;
@@ -119,7 +119,7 @@ if (!function_exists('get_userinfo_url')) {
     }
 }
 
-if (!function_exists('basic_curl_get_wrapper')) {
+if (!function_exists('curl_get_wrapper')) {
     /**
      * @param $url
      * @param bool $return_json
