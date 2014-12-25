@@ -19,6 +19,9 @@ Route::filter('wechat.base', function() {
         if (Input::has('openid')) {
             Session::put('openid', Input::get('openid'));
         }
+        if (!Session::has('openid')) {
+            return '请设置openid';
+        }
     } else {
         $lastOauthTime = Session::get('oauth_time', 0);
         $timeNow = time();
@@ -56,44 +59,60 @@ Route::filter('wechat.base', function() {
  */
 Route::filter('wechat.userinfo', function() {
     $userAgent = Request::header('User-Agent');
-    if (!preg_match('#MicroMessenger#i', $userAgent)) {
-        return App::abort(500, '只能在微信浏览器中打开');
-    }
-    $lastOauthTime = Session::get('oauth_time', 0);
-    $timeNow = time();
-    if (!Session::has('wechat_userinfo') or (Input::has('wechat-force') and ($lastOauthTime < ($timeNow - 30)))) {
-        if (Input::has('code')) {
-            //获取openid
-            try {
-                $token = get_access_token(Input::get('code'));
-            } catch (Exception $e) {
-                Log::error($e->getMessage());
-                return '获取token错误';
-            }
+    $environment = App::environment();
+    if ($environment == 'local' and !preg_match('#MicroMessenger#i', $userAgent)) {
+        Session::put('oauth_time', time());
+        if (Input::has('openid')) {
+            Session::put('openid', Input::get('openid'));
+        }
+        if (!Session::has('openid')) {
+            return '请设置openid';
+        }
+        $userInfo['openid'] = Session::get('openid');
+        $userInfo['subscribe'] = Input::get('subscribe', 0);
+        $userInfo['nickname'] = Input::get('nickname', 'testname');
+        $userInfo['headimgurl'] = Input::get('headimgurl', 'http://placehold.it/111x111');
+        Session::put('wechat_userinfo', $userInfo);
+    } else {
+        if (!preg_match('#MicroMessenger#i', $userAgent)) {
+            return App::abort(500, '只能在微信浏览器中打开');
+        }
+        $lastOauthTime = Session::get('oauth_time', 0);
+        $timeNow = time();
+        if (!Session::has('wechat_userinfo') or (Input::has('wechat-force') and ($lastOauthTime < ($timeNow - 30)))) {
+            if (Input::has('code')) {
+                //获取openid
+                try {
+                    $token = get_access_token(Input::get('code'));
+                } catch (Exception $e) {
+                    Log::error($e->getMessage());
+                    return '获取token错误';
+                }
 
-            try {
-                $userinfo = get_userinfo($token['access_token'], $token['openid']);
-            } catch (Exception $e) {
-                Log::error($e->getMessage());
-                return '获取userinfo错误';
+                try {
+                    $userinfo = get_userinfo($token['access_token'], $token['openid']);
+                } catch (Exception $e) {
+                    Log::error($e->getMessage());
+                    return '获取userinfo错误';
+                }
+                try {
+                    $globalUserinfo = get_global_userinfo($token['openid']);
+                    $userinfo = array_merge($userinfo, $globalUserinfo);
+                } catch (Exception $e) {
+                    Log::error($e->getMessage());
+                    $userinfo['subscribe'] = 0;
+                }
+                Session::put('wechat_userinfo', $userinfo);
+                return Redirect::intended(Request::fullUrl());
+            } else {
+                try {
+                    $getCodeRedirect = get_code_redirect('snsapi_userinfo');
+                    return $getCodeRedirect;
+                } catch (Exception $e) {
+                    Log::error($e->getMessage());
+                }
+                return '未配置微信号';
             }
-            try {
-                $globalUserinfo = get_global_userinfo($token['openid']);
-                $userinfo = array_merge($userinfo, $globalUserinfo);
-            } catch (Exception $e) {
-                Log::error($e->getMessage());
-                $userinfo['subscribe'] = 0;
-            }
-            Session::put('wechat_userinfo', $userinfo);
-            return Redirect::intended(Request::fullUrl());
-        } else {
-            try {
-                $getCodeRedirect = get_code_redirect('snsapi_userinfo');
-                return $getCodeRedirect;
-            } catch (Exception $e) {
-                Log::error($e->getMessage());
-            }
-            return '未配置微信号';
         }
     }
 });
