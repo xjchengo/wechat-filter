@@ -4,7 +4,7 @@
  * 需要在Config在设置好wechat的相关信息
  */
 
-
+use Xjchen\WechatFilter\Helper;
 
 /**
  * 获取用户的openid，不需要用户授权
@@ -29,13 +29,13 @@ Route::filter('wechat.base', function() {
             if (Input::has('code')) {
                 //获取openid
                 try {
-                    $accessToken = get_access_token(Input::get('code'));
+                    $accessToken = Helper::get_access_token(Input::get('code'));
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
                     return '获取token错误';
                 }
                 try {
-                    $userinfo = get_global_userinfo($accessToken['openid']);
+                    $userinfo = Helper::get_global_userinfo($accessToken['openid']);
                     Session::put('wechat_userinfo', $userinfo);
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
@@ -43,7 +43,7 @@ Route::filter('wechat.base', function() {
                 return Redirect::intended(Request::fullUrl());
             } else {
                 try {
-                    $getCodeRedirect = get_code_redirect('snsapi_base');
+                    $getCodeRedirect = Helper::get_code_redirect('snsapi_base');
                     return $getCodeRedirect;
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
@@ -75,7 +75,7 @@ Route::filter('wechat.userinfo', function() {
         Session::put('wechat_userinfo', $userInfo);
     } else {
         if (!preg_match('#MicroMessenger#i', $userAgent)) {
-            return App::abort(500, '只能在微信浏览器中打开');
+            App::abort(500, '只能在微信浏览器中打开');
         }
         $lastOauthTime = Session::get('oauth_time', 0);
         $timeNow = time();
@@ -83,20 +83,20 @@ Route::filter('wechat.userinfo', function() {
             if (Input::has('code')) {
                 //获取openid
                 try {
-                    $token = get_access_token(Input::get('code'));
+                    $token = Helper::get_access_token(Input::get('code'));
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
                     return '获取token错误';
                 }
 
                 try {
-                    $userinfo = get_userinfo($token['access_token'], $token['openid']);
+                    $userinfo = Helper::get_userinfo($token['access_token'], $token['openid']);
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
                     return '获取userinfo错误';
                 }
                 try {
-                    $globalUserinfo = get_global_userinfo($token['openid']);
+                    $globalUserinfo = Helper::get_global_userinfo($token['openid']);
                     $userinfo = array_merge($userinfo, $globalUserinfo);
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
@@ -106,7 +106,7 @@ Route::filter('wechat.userinfo', function() {
                 return Redirect::intended(Request::fullUrl());
             } else {
                 try {
-                    $getCodeRedirect = get_code_redirect('snsapi_userinfo');
+                    $getCodeRedirect = Helper::get_code_redirect('snsapi_userinfo');
                     return $getCodeRedirect;
                 } catch (Exception $e) {
                     Log::error($e->getMessage());

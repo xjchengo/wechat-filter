@@ -18,7 +18,6 @@ class WechatFilterServiceProvider extends ServiceProvider {
     {
         $this->package('xjchen/wechat-filter', null, __DIR__);
 
-        include __DIR__.'/helpers.php';
         include __DIR__.'/filters.php';
     }
 
