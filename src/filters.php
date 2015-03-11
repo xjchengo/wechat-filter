@@ -80,7 +80,7 @@ Route::filter('wechat.userinfo', function() {
         $lastOauthTime = Session::get('oauth_time', 0);
         $timeNow = time();
         if (!Session::has('wechat_userinfo') or (Input::has('wechat-force') and ($lastOauthTime < ($timeNow - 30)))) {
-            if (Input::has('code')) {
+            if (Input::has('code') and Session::has('url.intended')) {
                 //获取openid
                 try {
                     $token = Helper::get_access_token(Input::get('code'));
