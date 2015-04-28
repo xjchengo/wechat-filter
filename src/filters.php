@@ -35,6 +35,7 @@ Route::filter('wechat.base', function() {
                     return '获取token错误';
                 }
                 try {
+                    Session::put('oauth-access-token', $accessToken);
                     $userinfo = Helper::get_global_userinfo($accessToken['openid']);
                     Session::put('wechat_userinfo', $userinfo);
                 } catch (Exception $e) {
@@ -90,6 +91,7 @@ Route::filter('wechat.userinfo', function() {
                 }
 
                 try {
+                    Session::put('oauth-access-token', $token);
                     $userinfo = Helper::get_userinfo($token['access_token'], $token['openid']);
                 } catch (Exception $e) {
                     Log::error($e->getMessage());
