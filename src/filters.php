@@ -72,7 +72,7 @@ Route::filter('wechat.userinfo', function() {
         $userInfo['openid'] = Session::get('openid');
         $userInfo['subscribe'] = Input::get('subscribe', 0);
         $userInfo['nickname'] = Input::get('nickname', 'testname');
-        $userInfo['headimgurl'] = Input::get('headimgurl', 'http://placehold.it/111x111');
+        $userInfo['headimgurl'] = Input::get('headimgurl', 'http://zhanwei.echo58.com/111x111');
         Session::put('wechat_userinfo', $userInfo);
     } else {
         if (!preg_match('#MicroMessenger#i', $userAgent)) {
