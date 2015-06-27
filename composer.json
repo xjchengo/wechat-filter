@@ -2,7 +2,7 @@
     "name": "xjchen/wechat-filter",
     "license": "MIT",
     "description": "Laravel Package for 微信用户身份获取",
-    "keywords": ["laravel", "oauth", "wechat"],
+    "keywords": ["laravel", "oauth", "wechat", "微信"],
     "authors": [
         {
             "name": "xjchen",
